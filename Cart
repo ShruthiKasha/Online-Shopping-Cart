@@ -1,0 +1,198 @@
+
+import java.util.*;
+import java.io.*;
+
+// Product class
+class Product implements Serializable {
+    int id;
+    String name, category;
+    double price;
+
+    Product(int id, String name, String category, double price) {
+        this.id = id;
+        this.name = name;
+        this.category = category;
+        this.price = price;
+    }
+
+    public String toString() {
+        return id + " | " + name + " | " + category + " | Rs." + price;
+    }
+}
+
+// Functional Interface
+@FunctionalInterface
+interface Filter {
+    boolean check(Product p);
+}
+
+// Main class
+public class Main {
+
+    static HashMap<Integer, Product> products = new HashMap<>();
+    static ArrayList<Product> cart = new ArrayList<>();
+
+    public static void main(String[] args) {
+
+        Scanner sc = new Scanner(System.in);
+
+        // Adding products to HashMap
+        products.put(1, new Product(1, "Laptop", "Electronics", 50000));
+        products.put(2, new Product(2, "Phone", "Electronics", 20000));
+        products.put(3, new Product(3, "Shoes", "Fashion", 2000));
+        products.put(4, new Product(4, "Watch", "Fashion", 3000));
+        products.put(5, new Product(5, "Headphones", "Electronics", 1500));
+
+        int choice;
+
+        do {
+            System.out.println("\n===== ONLINE SHOPPING CART =====");
+            System.out.println("1. Display Products");
+            System.out.println("2. Add to Cart");
+            System.out.println("3. Remove from Cart");
+            System.out.println("4. View Cart");
+            System.out.println("5. Filter by Price");
+            System.out.println("6. Filter by Category");
+            System.out.println("7. Save Cart");
+            System.out.println("8. Restore Cart");
+            System.out.println("9. Place Order");
+            System.out.println("10. Exit");
+
+            System.out.print("Enter choice: ");
+            choice = sc.nextInt();
+
+            switch (choice) {
+
+                case 1:
+                    System.out.println("\nAvailable Products:");
+                    for (Product p : products.values())
+                        System.out.println(p);
+                    break;
+
+                case 2:
+                    System.out.print("Enter Product ID: ");
+                    int id = sc.nextInt();
+
+                    if (products.containsKey(id)) {
+                        cart.add(products.get(id));
+                        System.out.println("Product added successfully!");
+                    } else {
+                        System.out.println("Invalid Product ID!");
+                    }
+                    break;
+
+                case 3:
+                    System.out.print("Enter Product ID to remove: ");
+                    int rid = sc.nextInt();
+
+                    boolean removed = cart.removeIf(p -> p.id == rid);
+
+                    System.out.println(removed ?
+                        "Product removed!" : "Product not found!");
+                    break;
+
+                case 4:
+                    double total = 0;
+                    System.out.println("\nYour Cart:");
+
+                    for (Product p : cart) {
+                        System.out.println(p);
+                        total += p.price;
+                    }
+
+                    System.out.println("Total: Rs." + total);
+                    break;
+
+                case 5:
+                    System.out.print("Enter maximum price: ");
+                    double max = sc.nextDouble();
+
+                    System.out.println("\nFiltered Products:");
+
+                    products.values().stream()
+                        .filter(p -> p.price <= max)
+                        .forEach(System.out::println);
+                    break;
+
+                case 6:
+                    System.out.print("Enter category: ");
+                    String category = sc.next();
+
+                    Filter f = p ->
+                        p.category.equalsIgnoreCase(category);
+
+                    System.out.println("\nCategory Products:");
+
+                    for (Product p : products.values()) {
+                        if (f.check(p))
+                            System.out.println(p);
+                    }
+                    break;
+
+                case 7:
+                    try {
+                        ObjectOutputStream out =
+                            new ObjectOutputStream(
+                                new FileOutputStream("cart.ser"));
+
+                        out.writeObject(cart);
+                        out.close();
+
+                        System.out.println("Cart saved successfully!");
+                    } catch (IOException e) {
+                        System.out.println("Saving failed: " + e.getMessage());
+                    }
+                    break;
+
+                case 8:
+                    try {
+                        ObjectInputStream in =
+                            new ObjectInputStream(
+                                new FileInputStream("cart.ser"));
+
+                        cart = (ArrayList<Product>) in.readObject();
+                        in.close();
+
+                        System.out.println("Cart restored successfully!");
+
+                        for (Product p : cart)
+                            System.out.println(p);
+
+                    } catch (Exception e) {
+                        System.out.println("No saved cart found!");
+                    }
+                    break;
+
+                case 9:
+                    if (cart.isEmpty()) {
+                        System.out.println("Cart is empty!");
+                    } else {
+                        double amount = 0;
+
+                        System.out.println("\n===== ORDER SUMMARY =====");
+
+                        for (Product p : cart) {
+                            System.out.println(p);
+                            amount += p.price;
+                        }
+
+                        System.out.println("Total Amount: Rs." + amount);
+                        System.out.println("Order placed successfully!");
+
+                        cart.clear();
+                    }
+                    break;
+
+                case 10:
+                    System.out.println("Thank you for shopping!");
+                    break;
+
+                default:
+                    System.out.println("Invalid choice!");
+            }
+
+        } while (choice != 10);
+
+        sc.close();
+    }
+}
